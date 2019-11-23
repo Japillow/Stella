@@ -2,13 +2,17 @@ from website import Website
 
 
 class App(object):
-    def __init__(self, website_urls):
-        self.websites = [Website(url) for url in website_urls]
+    def __init__(self, websites_conf):
+        self.websites = [Website(website_conf[0], int(website_conf[1])) for website_conf in websites_conf]
 
     def start(self):
-        # print([(f"Starting Monitoring for : {website.url}") for website in self.websites])
         self.check_websites()
 
     def check_websites(self):
-        for website in self.websites:
+
+        # only one website for now
+        website = self.websites[0]
+
+        for i in range(12):
             website.ping()
+            website.contact()
