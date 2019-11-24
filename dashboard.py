@@ -21,7 +21,6 @@ class Dashboard(object):
         curses.curs_set(False)
         curses.init_pair(1, curses.COLOR_BLUE, curses.COLOR_BLACK)
         self.screen.keypad(True)
-        self.screen.refresh()
         self.websites = websites
         self.selected_website = 0
 
@@ -41,21 +40,22 @@ class Dashboard(object):
         sys.exit(0)
 
     def init_screen(self):
-        # curses.resizeterm(30, 100)
+        self.screen.clear()
         self.screen.refresh()
+        self.window = curses.newwin(100, 100, 0, 1)
 
     def home_screen(self):
-        self.screen.clear()
-        self.window = curses.newwin(1, 1, 10, 10)
-        self.window.clear()
-
-        self.screen.addstr(0, 0, "Select a website to display additional information (press H for help):")
+        self.window.addstr(
+            0, 0, "Select a website to display additional information (press H for help):")
 
         for i, website in enumerate(self.websites):
             if i == self.selected_website:
-                self.screen.addstr(i + 1, 0, f"> {website.hostname}", curses.color_pair(1) | curses.A_BOLD)
+                self.window.addstr(i + 1, 0, f"> {website.hostname}",
+                                   curses.color_pair(1) | curses.A_BOLD)
             else:
-                self.screen.addstr(i + 1, 0, f"  {website.hostname}")
+                self.window.addstr(i + 1, 0, f"  {website.hostname}")
+
+        self.window.refresh()
 
         # websites_choice_pad = curses.newpad(100, 100)
         # # websites_choice_pad.border('|', '|', '-', '-', '+', '+', '+', '+')
@@ -72,6 +72,10 @@ class Dashboard(object):
         try:
             char_ord = self.screen.getch()
             char = chr(char_ord).upper()
+
+            self.window.clear()
+            self.window.refresh()
+
             if char == 'Q' or char_ord == curses.ascii.ESC:
                 return False
             elif char == 'H':
@@ -85,25 +89,29 @@ class Dashboard(object):
             elif char_ord == curses.ascii.LF or char_ord == curses.KEY_RIGHT:
                 self.print_website_page(self.websites[self.selected_website])
         except Exception:
-            self.screen.addstr(10, 0, 'Invalid keypress detected.')
-
+            self.screen.addstr(0, 0, 'Invalid keypress detected.')
+            self.screen.refresh()
+            self.screen.getch()
+            self.screen.clear()
+            self.screen.refresh()
         return True
 
     def print_help_screen(self):
-        self.screen.clear()
-
-        self.screen.addstr(0, 0, "Help information:")
-        self.screen.addstr(2, 0, "  H - This help screen")
-        self.screen.addstr(3, 0, "  Q or ESC - Quit the program")
-        self.screen.addstr(4, 0, "  Down - Move selection down")
-        self.screen.addstr(5, 0, "  Up - Move selection up")
-        self.screen.addstr(6, 0, "  Right or Enter - Select website to check")
-        self.screen.addstr(8, 0, "Press any key to continue")
+        self.window.addstr(0, 0, "Help information:")
+        self.window.addstr(2, 0, "  H - This help screen")
+        self.window.addstr(3, 0, "  Q or ESC - Quit the program")
+        self.window.addstr(4, 0, "  Down - Move selection down")
+        self.window.addstr(5, 0, "  Up - Move selection up")
+        self.window.addstr(6, 0, "  Right or Enter - Select website to check")
+        self.window.addstr(8, 0, "Press any key to continue")
 
         # Wait for any key press
-        self.screen.getch()
+        self.window.getch()
+        self.window.clear()
+        self.window.refresh()
 
     def print_website_page(self, website):
-        self.screen.clear()
         self.screen.addstr(0, 0, f"Website : {website.hostname}")
         self.screen.getch()
+        self.screen.clear()
+        self.screen.refresh()
