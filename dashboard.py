@@ -4,14 +4,14 @@ from signal import signal, SIGINT, SIGTERM
 import sys
 
 
-def wrapped_dashboard(screen, websites):
+def wrapped_dashboard(screen, websites, alert_history):
     print("Starting Dashboard")
-    dashboard = Dashboard(screen, websites)
+    dashboard = Dashboard(screen, websites, alert_history)
     dashboard.start()
 
 
 class Dashboard(object):
-    def __init__(self, screen, websites):
+    def __init__(self, screen, websites, alert_history):
         signal(SIGINT, self.stop)
         signal(SIGTERM, self.stop)
         self.screen = screen
@@ -23,6 +23,7 @@ class Dashboard(object):
         self.screen.keypad(True)
         self.websites = websites
         self.selected_website = 0
+        self.alert_history = alert_history
 
     def start(self):
         self.init_screen()
@@ -45,45 +46,56 @@ class Dashboard(object):
         self.window = curses.newwin(100, 100, 0, 1)
 
     def home_screen(self):
-        self.window = curses.newwin(1, 100, 0, 1)
-        self.window.addstr(
-            0, 0, "Select a website to display additional information (press H for help):")
+        self.window = curses.newwin(2, 100, 0, 1)
+        self.window.addstr(0, 0, "Select a website to display additional information:")
+        self.window.addstr(1, 0, "(press h for help)")
         self.window.refresh()
 
-        self.window_hostname = curses.newwin(100, 100, 1, 1)
-        self.window_availability = curses.newwin(100, 100, 1, 20)
-        self.window_response_time = curses.newwin(100, 100, 1, 33)
+        title_lines = 2
+        self.window_hostname = curses.newwin(100, 30, title_lines, 1)
+        self.window_availability = curses.newwin(100, 20, title_lines, 20)
+        self.window_response_time = curses.newwin(100, 20, title_lines, 33)
 
-        self.window_hostname.addstr(0, 0, "Hostname")
-        self.window_availability.addstr(0, 0, " Availability")
-        self.window_response_time.addstr(0, 0, " Resp.Time (min/avg/max) in ms")
+        self.window_hostname.addstr(0, 0, "Hostname", curses.A_BOLD)
+        self.window_availability.addstr(0, 0, " Availability", curses.A_BOLD)
+        self.window_response_time.addstr(0, 0, " Resp.Time in ms", curses.A_BOLD)
+        self.window_response_time.addstr(1, 0, " (min/avg/max)", curses.A_BOLD)
 
+        header_lines = 2
         for i, website in enumerate(self.websites):
             if i == self.selected_website:
-                self.window_hostname.addstr(i + 1, 0, f"> {website.hostname}",
+                self.window_hostname.addstr(i + header_lines, 0, f"> {website.hostname}",
                                             curses.color_pair(1) | curses.A_BOLD)
-                self.window_availability.addstr(i + 1, 0,
-                                                f" {website.ping_stats_list[120].availability:.2f}",
-                                                curses.color_pair(1) | curses.A_BOLD)
+                self.window_availability.addstr(
+                    i + header_lines, 0, f" {website.ping_stats_list[120].availability:.2f}",
+                    curses.color_pair(1) | curses.A_BOLD)
                 self.window_response_time.addstr(
-                    i + 1, 0, (f" {website.ping_stats_list[120].min_response_time:.0f}"
-                               f"/{website.ping_stats_list[120].average_response_time:.0f}"
-                               f"/{website.ping_stats_list[120].max_response_time:.0f}"),
+                    i + header_lines, 0,
+                    (f" {website.ping_stats_list[120].min_response_time:.0f}"
+                     f"/{website.ping_stats_list[120].average_response_time:.0f}"
+                     f"/{website.ping_stats_list[120].max_response_time:.0f}"),
                     curses.color_pair(1) | curses.A_BOLD)
 
             else:
-                self.window_hostname.addstr(i + 1, 0, f"  {website.hostname}")
+                self.window_hostname.addstr(i + header_lines, 0, f"  {website.hostname}")
                 self.window_availability.addstr(
-                    i + 1, 0, f" {website.ping_stats_list[120].availability:.2f}")
+                    i + header_lines, 0, f" {website.ping_stats_list[120].availability:.2f}")
                 self.window_response_time.addstr(
-                    i + 1, 0, (f" {website.ping_stats_list[120].min_response_time:.0f}"
-                               f"/{website.ping_stats_list[120].average_response_time:.0f}"
-                               f"/{website.ping_stats_list[120].max_response_time:.0f}"))
+                    i + header_lines, 0,
+                    (f" {website.ping_stats_list[120].min_response_time:.0f}"
+                     f"/{website.ping_stats_list[120].average_response_time:.0f}"
+                     f"/{website.ping_stats_list[120].max_response_time:.0f}"))
 
-        self.window.refresh()
+        self.window_alerts = curses.newwin(50, 100, 0, 55)
+        self.window_alerts.addstr(0, 0, "Alerts", curses.A_BOLD)
+        for i, alert in enumerate(self.alert_history):
+            self.window_alerts.addstr(i + 1, 0, f"{alert.message}")
+        self.window_alerts.refresh()
+
         self.window_hostname.refresh()
         self.window_availability.refresh()
         self.window_response_time.refresh()
+        self.window_alerts.refresh()
 
     def listen_for_input(self):
         try:
@@ -131,16 +143,20 @@ class Dashboard(object):
 
     def print_website_page(self, website):
         self.window = curses.newwin(50, 50, 0, 1)
+        website.lock.acquire()
         self.window.addstr(0, 0, f"Website : {website.hostname}", curses.A_BOLD)
         print_index = self.print_detailed_website_stats(self.window, 1,
                                                         website.ping_stats_list[3600], 60)
         print_index = self.print_detailed_website_stats(self.window, print_index + 1,
                                                         website.ping_stats_list[600], 10)
+        website.lock.release()
 
         self.window2 = curses.newwin(50, 50, 0, 51)
         self.window2.addstr(0, 0, "Alerts", curses.A_BOLD)
+        website.lock.acquire()
         for i, alert in enumerate(website.alert_history):
             self.window2.addstr(i + 1, 0, f"{alert.message}")
+        website.lock.release()
 
         self.window2.refresh()
 

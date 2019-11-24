@@ -1,3 +1,4 @@
+from threading import Lock
 from urllib.parse import urlparse
 
 from Alert import AvailabilityAlert, AvailabilityRecovered
@@ -8,6 +9,7 @@ from stats import HttpStats, PingStats
 
 class Website(object):
     def __init__(self, website_url, check_interval):
+        self.lock = Lock()
         self.url = website_url
         parsed_url = urlparse(website_url)
         self.hostname = parsed_url.netloc
@@ -20,35 +22,36 @@ class Website(object):
 
     def ping(self):
         is_up, response_time, response_code = ping(self.hostname)
+
+        self.lock.acquire()
         for timeframe in self.ping_stats_list:
             self.ping_stats_list[timeframe].update(is_up, response_time, response_code)
-
-        # if is_up:
-        #     print(f"{self.hostname} ping successful")
-        # else:
-        #     print(f"{self.hostname} ping failed")
-        #     self.ping_stats.update(False, None, response_code)
+        self.lock.release()
 
     def contact_website(self):
         is_up, response_time, response_code = http_ping(self.url)
+
+        self.lock.acquire()
         for timeframe in self.http_stats_list:
             self.http_stats_list[timeframe].update(is_up, response_time, response_code)
-
-        # if is_up:
-        #     print(f"{self.url} is up")
-        # else:
-        #     print(f"{self.url} is down")
+        self.lock.release()
 
     def check_website(self):
         self.ping()
         self.contact_website()
-        self.check_http_availability()
 
     def check_http_availability(self):
+        self.lock.acquire()
         availability = self.ping_stats_list[120].availability
         if self.availability_issue and availability > 0.8:
             self.availability_issue = False
-            self.alert_history += [AvailabilityRecovered(self.hostname, availability)]
+            alert = AvailabilityRecovered(self.hostname, availability)
+            self.alert_history += [alert]
         if availability < 0.8 and not self.availability_issue:
             self.availability_issue = True
-            self.alert_history += [AvailabilityAlert(self.hostname, availability)]
+            alert = AvailabilityAlert(self.hostname, availability)
+            self.alert_history += [alert]
+        else:
+            alert = None
+        self.lock.release()
+        return alert
