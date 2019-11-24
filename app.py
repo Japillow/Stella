@@ -2,7 +2,7 @@ import curses
 from threading import Thread
 import time
 
-from dashboard import wrapped_dashboard
+from dashboard import Dashboard
 from website import Website
 
 
@@ -18,7 +18,10 @@ class App(object):
             thread.start()
             # Daemon threads will stop when app exits
 
-        curses.wrapper(wrapped_dashboard)
+        screen = curses.initscr()
+        dashboard = Dashboard(screen, self.websites)
+        dashboard.start()
+        # curses.wrapper(wrapped_dashboard, self.websites)
         # Thread(target=curses.wrapper, args=(wrapped_dashboard, ))
         print("Exiting")
 
