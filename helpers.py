@@ -33,6 +33,5 @@ def contact_web_page(url):
         response_time = time.time() - start
         return True, response_time / 100, response.getcode()
 
-    except Exception as exc:
-        print(exc)
+    except Exception:
         return False, None, None

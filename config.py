@@ -1,8 +1,10 @@
-from datetime import timedelta
+second = 1
+minute = 60
+hour = 60 * minute
 
 WEBSITES_FILE = "websites.conf"
 
 # Stats
-STATS_TIMEFRAME = [timedelta(minutes=2), timedelta(minutes=10)]
-DISPLAY_INTERVALS = [(timedelta(seconds=10), timedelta(minutes=10)),
-                     (timedelta(minutes=1), timedelta(hours=1))]
+STATS_TIMEFRAME = [2 * minute, 10 * minute, 1 * hour]
+DISPLAY_INTERVALS = [(10 * second, 10 * minute),
+                     (1 * minute, 1 * hour)]

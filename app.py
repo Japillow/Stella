@@ -9,10 +9,7 @@ class App(object):
         self.check_websites()
 
     def check_websites(self):
-
-        # only one website for now
-        website = self.websites[0]
-
-        for i in range(12):
-            website.ping()
-            website.contact()
+        for website in self.websites:
+            for i in range(12):
+                website.ping()
+                website.contact()

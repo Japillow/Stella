@@ -1,6 +1,7 @@
 from urllib.parse import urlparse
 
-from helpers import ping, contact_web_page
+import config
+from helpers import contact_web_page, ping
 from stats import HttpStats, PingStats
 
 
@@ -10,13 +11,14 @@ class Website(object):
         parsed_url = urlparse(website_url)
         self.hostname = parsed_url.netloc
         # self.check_interval = check_interval
-        self.ping_stats = PingStats(check_interval, 120)
-        self.site_stats = HttpStats(check_interval, 120)
+
+        self.ping_stats_list = {timeframe: PingStats(check_interval, timeframe) for timeframe in config.STATS_TIMEFRAME}
+        self.site_stats_list = {timeframe: HttpStats(check_interval, timeframe) for timeframe in config.STATS_TIMEFRAME}
 
     def ping(self):
-
         is_up, response_time, response_code = ping(self.hostname)
-        self.ping_stats.update(is_up, response_time, response_code)
+        for timeframe in self.ping_stats_list:
+            self.ping_stats_list[timeframe].update(is_up, response_time, response_code)
 
         # if is_up:
         #     print(f"{self.hostname} ping successful")
@@ -26,7 +28,8 @@ class Website(object):
 
     def contact(self):
         is_up, response_time, response_code = contact_web_page(self.url)
-        self.site_stats.update(is_up, response_time, response_code)
+        for timeframe in self.site_stats_list:
+            self.site_stats_list[timeframe].update(is_up, response_time, response_code)
 
         # if is_up:
         #     print(f"{self.url} is up")
