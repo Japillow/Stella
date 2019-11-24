@@ -18,10 +18,10 @@ class App(object):
             thread.start()
             # Daemon threads will stop when app exits
 
-        screen = curses.initscr()
-        wrapped_dashboard(screen, self.websites)
-        # curses.wrapper(wrapped_dashboard, self.websites)
-        # Thread(target=curses.wrapper, args=(wrapped_dashboard, ))
+        curses.wrapper(wrapped_dashboard, self.websites)
+        # dashboard_thread = Thread(target=curses.wrapper, args=(wrapped_dashboard, self.websites))
+        # dashboard_thread.start()
+        # dashboard_thread.join()
         print("Exiting")
 
     def check_website(website):

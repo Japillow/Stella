@@ -23,7 +23,7 @@ class Stats(object):
         self.response_codes = deque()
         self.response_codes_dict = {} # To access response codes in constant time
 
-        self.availability = None
+        self.availability = "Not yet computed"
         self.max_response_time = 0.
         self.min_response_time = float('inf')
         self.average_response_time = float('inf')
@@ -69,7 +69,7 @@ class Stats(object):
             else:
                 self.response_codes_dict[response_code] = 1
 
-        self.availability = self.successes_in_timeframe / self.data_points
+        self.availability = self.successes_in_timeframe / len(self.ups)
         if self.successes_in_timeframe > 0:
             self.average_response_time = self.sum_response_times / self.successes_in_timeframe
 

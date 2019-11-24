@@ -13,7 +13,7 @@ class Website(object):
         self.check_interval = check_interval
 
         self.ping_stats_list = {timeframe: PingStats(check_interval, timeframe) for timeframe in config.STATS_TIMEFRAME}
-        self.site_stats_list = {timeframe: HttpStats(check_interval, timeframe) for timeframe in config.STATS_TIMEFRAME}
+        self.http_stats_list = {timeframe: HttpStats(check_interval, timeframe) for timeframe in config.STATS_TIMEFRAME}
 
     def ping(self):
         is_up, response_time, response_code = ping(self.hostname)
@@ -28,8 +28,8 @@ class Website(object):
 
     def contact_website(self):
         is_up, response_time, response_code = http_ping(self.url)
-        for timeframe in self.site_stats_list:
-            self.site_stats_list[timeframe].update(is_up, response_time, response_code)
+        for timeframe in self.http_stats_list:
+            self.http_stats_list[timeframe].update(is_up, response_time, response_code)
 
         # if is_up:
         #     print(f"{self.url} is up")
