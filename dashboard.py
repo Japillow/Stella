@@ -1,6 +1,6 @@
 import curses
 import curses.ascii
-from signal import signal, SIGINT, SIGTERM
+from signal import alarm, signal, SIGALRM, SIGINT, SIGTERM
 import sys
 
 
@@ -27,6 +27,10 @@ class Dashboard(object):
 
     def start(self):
         self.init_screen()
+        self.timeout = 10
+        self.run()
+
+    def run(self):
         cont = True
         while cont:
             self.print_home_screen()
@@ -99,7 +103,10 @@ class Dashboard(object):
 
     def listen_for_input(self):
         try:
+            signal(SIGALRM, self.run)
+            alarm(self.timeout)
             char_ord = self.screen.getch()
+            alarm(0)
             char = chr(char_ord).upper()
 
             self.screen.clear()
