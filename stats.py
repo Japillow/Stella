@@ -21,13 +21,13 @@ class Stats(object):
         self.ups = deque()
         self.response_times = deque()
         self.response_codes = deque()
-        self.response_codes_dict = {} # To access response codes in constant time
+        self.response_codes_dict = {}  # To access response codes in constant time
 
-        self.availability = "Not yet computed"
+        self.availability = 0
         self.max_response_time = 0.
         self.min_response_time = float('inf')
         self.average_response_time = float('inf')
-
+    
     def update(self, is_up, response_time=None, response_code=None, always_a_response_code=False):
 
         # start = time.time()
@@ -73,8 +73,8 @@ class Stats(object):
         if self.successes_in_timeframe > 0:
             self.average_response_time = self.sum_response_times / self.successes_in_timeframe
 
-        assert len(self.ups) <= self.data_points
-        assert len(self.response_times) == self.successes_in_timeframe
+        # assert len(self.ups) <= self.data_points
+        # assert len(self.response_times) == self.successes_in_timeframe
 
 
 class HttpStats(Stats):
@@ -82,7 +82,7 @@ class HttpStats(Stats):
         if is_up and (response_time is None or response_time is None):
             raise ValueError("Site is available but no additional information given")
         super().update(is_up, response_time, response_code)
-        assert len(self.response_codes) == self.successes_in_timeframe
+        # assert len(self.response_codes) == self.successes_in_timeframe
 
 
 class PingStats(Stats):
@@ -90,4 +90,4 @@ class PingStats(Stats):
         if response_code is None:
             raise ValueError("Ping should return a response code")
         super().update(is_up, response_time, response_code, always_a_response_code=True)
-        assert len(self.response_codes) == len(self.ups)
+        # assert len(self.response_codes) == len(self.ups), (len(self.response_codes), len(self.ups))

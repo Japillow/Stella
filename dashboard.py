@@ -52,36 +52,38 @@ class Dashboard(object):
 
         self.window_hostname = curses.newwin(100, 100, 1, 1)
         self.window_availability = curses.newwin(100, 100, 1, 20)
+        self.window_response_time = curses.newwin(100, 100, 1, 33)
 
         self.window_hostname.addstr(0, 0, "Hostname")
         self.window_availability.addstr(0, 0, " Availability")
+        self.window_response_time.addstr(0, 0, " Resp.Time (min/avg/max) in ms")
+
         for i, website in enumerate(self.websites):
             if i == self.selected_website:
                 self.window_hostname.addstr(i + 1, 0, f"> {website.hostname}",
                                             curses.color_pair(1) | curses.A_BOLD)
                 self.window_availability.addstr(i + 1, 0,
-                                                f" {website.http_stats_list[120].availability}",
+                                                f" {website.ping_stats_list[120].availability:.2f}",
                                                 curses.color_pair(1) | curses.A_BOLD)
+                self.window_response_time.addstr(
+                    i + 1, 0, (f" {website.ping_stats_list[120].min_response_time:.0f}"
+                               f"/{website.ping_stats_list[120].average_response_time:.0f}"
+                               f"/{website.ping_stats_list[120].max_response_time:.0f}"),
+                    curses.color_pair(1) | curses.A_BOLD)
 
             else:
                 self.window_hostname.addstr(i + 1, 0, f"  {website.hostname}")
-                self.window_availability.addstr(i + 1, 0,
-                                                f" {website.http_stats_list[120].availability}")
+                self.window_availability.addstr(
+                    i + 1, 0, f" {website.ping_stats_list[120].availability:.2f}")
+                self.window_response_time.addstr(
+                    i + 1, 0, (f" {website.ping_stats_list[120].min_response_time:.0f}"
+                               f"/{website.ping_stats_list[120].average_response_time:.0f}"
+                               f"/{website.ping_stats_list[120].max_response_time:.0f}"))
 
         self.window.refresh()
         self.window_hostname.refresh()
         self.window_availability.refresh()
-
-        # websites_choice_pad = curses.newpad(100, 100)
-        # # websites_choice_pad.border('|', '|', '-', '-', '+', '+', '+', '+')
-
-        # # websites_info_pad = curses.newpad(100, 100)
-        # for i, website in enumerate(self.websites):
-        #     if i == self.selected_website:
-        #         websites_choice_pad.addstr(i, 0, f"> {website.hostname}", curses.color_pair(1) | curses.A_BOLD)
-        #     else:
-        #         websites_choice_pad.addstr(i, 0, f"  {website.hostname}")
-        # websites_choice_pad.refresh(0, 0, 2, 1, 25, 50)
+        self.window_response_time.refresh()
 
     def listen_for_input(self):
         try:
@@ -128,8 +130,32 @@ class Dashboard(object):
         self.screen.refresh()
 
     def print_website_page(self, website):
-        self.window = curses.newwin(8, 50, 0, 1)
-        self.window.addstr(0, 0, f"Website : {website.hostname}")
+        self.window = curses.newwin(50, 50, 0, 1)
+        self.window.addstr(0, 0, f"Website : {website.hostname}", curses.A_BOLD)
+        print_index = self.print_detailed_website_stats(self.window, 1,
+                                                        website.ping_stats_list[3600], 60)
+        print_index = self.print_detailed_website_stats(self.window, print_index + 1,
+                                                        website.ping_stats_list[600], 10)
+
+        self.window2 = curses.newwin(50, 50, 0, 51)
+        self.window2.addstr(0, 0, "Alerts", curses.A_BOLD)
+        for i, alert in enumerate(website.alert_history):
+            self.window2.addstr(i + 1, 0, f"{alert.message}")
+
+        self.window2.refresh()
+
         self.window.getch()
         self.screen.clear()
         self.screen.refresh()
+
+    def print_detailed_website_stats(self, window, print_index, stats, timeframe_in_minutes):
+        window.addstr(print_index, 0, f"{timeframe_in_minutes} minutes stats", curses.A_BOLD)
+        window.addstr(print_index + 1, 0, "Availability: {:.0f}%".format(stats.availability / 100))
+        window.addstr(print_index + 2, 0, f"Resp.Time (min/avg/max) in ms: {stats.min_response_time:.0f}/{stats.average_response_time:.0f}/{stats.max_response_time:.0f}")
+        window.addstr(print_index + 3, 0, "Response Code count:")
+        print_index += 4
+        for key in stats.response_codes_dict:
+            window.addstr(print_index, 0, f"   {key}: {stats.response_codes_dict[key]}")
+            print_index += 1
+
+        return print_index

@@ -31,7 +31,7 @@ def http_ping(url):
         start = time.time()
         response = urlopen(url)
         response_time = time.time() - start
-        return True, response_time / 1000, response.getcode()
+        return True, response_time * 1000, response.getcode()
 
     except Exception:
         return False, None, None
