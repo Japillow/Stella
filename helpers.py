@@ -26,12 +26,12 @@ def ping(host):
     return (result.returncode == 0, response_time, result.returncode)
 
 
-def contact_web_page(url):
+def http_ping(url):
     try:
         start = time.time()
         response = urlopen(url)
         response_time = time.time() - start
-        return True, response_time / 100, response.getcode()
+        return True, response_time / 1000, response.getcode()
 
     except Exception:
         return False, None, None

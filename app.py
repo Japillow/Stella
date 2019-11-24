@@ -1,15 +1,29 @@
+import curses
+from threading import Thread
+import time
+
+from dashboard import wrapped_dashboard
 from website import Website
 
 
 class App(object):
     def __init__(self, websites_conf):
+        self.website_checking_running = False
         self.websites = [Website(website_conf[0], int(website_conf[1])) for website_conf in websites_conf]
 
     def start(self):
-        self.check_websites()
-
-    def check_websites(self):
+        self.website_checking_running = True
         for website in self.websites:
-            for i in range(12):
-                website.ping()
-                website.contact()
+            thread = Thread(target=App.check_website, args=(website, ), daemon=True)
+            thread.start()
+            # Daemon threads will stop when app exits
+
+        curses.wrapper(wrapped_dashboard)
+        # Thread(target=curses.wrapper, args=(wrapped_dashboard, ))
+        print("Exiting")
+
+    def check_website(website):
+        while True:
+            start = time.time()
+            website.check_website()
+            time.sleep(max(0, website.check_interval - (time.time() - start)))

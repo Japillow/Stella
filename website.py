@@ -1,7 +1,7 @@
 from urllib.parse import urlparse
 
 import config
-from helpers import contact_web_page, ping
+from helpers import http_ping, ping
 from stats import HttpStats, PingStats
 
 
@@ -10,7 +10,7 @@ class Website(object):
         self.url = website_url
         parsed_url = urlparse(website_url)
         self.hostname = parsed_url.netloc
-        # self.check_interval = check_interval
+        self.check_interval = check_interval
 
         self.ping_stats_list = {timeframe: PingStats(check_interval, timeframe) for timeframe in config.STATS_TIMEFRAME}
         self.site_stats_list = {timeframe: HttpStats(check_interval, timeframe) for timeframe in config.STATS_TIMEFRAME}
@@ -26,8 +26,8 @@ class Website(object):
         #     print(f"{self.hostname} ping failed")
         #     self.ping_stats.update(False, None, response_code)
 
-    def contact(self):
-        is_up, response_time, response_code = contact_web_page(self.url)
+    def contact_website(self):
+        is_up, response_time, response_code = http_ping(self.url)
         for timeframe in self.site_stats_list:
             self.site_stats_list[timeframe].update(is_up, response_time, response_code)
 
@@ -35,3 +35,7 @@ class Website(object):
         #     print(f"{self.url} is up")
         # else:
         #     print(f"{self.url} is down")
+
+    def check_website(self):
+        self.ping()
+        self.contact_website()
