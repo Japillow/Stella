@@ -43,14 +43,17 @@ class Website(object):
     def check_http_availability(self):
         self.lock.acquire()
         availability = self.ping_stats_list[120].availability
-        if self.availability_issue and availability > 0.8:
-            self.availability_issue = False
-            alert = AvailabilityRecovered(self.hostname, availability)
-            self.alert_history += [alert]
-        if availability < 0.8 and not self.availability_issue:
-            self.availability_issue = True
-            alert = AvailabilityAlert(self.hostname, availability)
-            self.alert_history += [alert]
+        if self.ping_stats_list[120].timeframe_reached():
+            if self.availability_issue and availability > 0.8:
+                self.availability_issue = False
+                alert = AvailabilityRecovered(self.hostname, availability)
+                self.alert_history += [alert]
+            if availability < 0.8 and not self.availability_issue:
+                self.availability_issue = True
+                alert = AvailabilityAlert(self.hostname, availability)
+                self.alert_history += [alert]
+            else:
+                alert = None
         else:
             alert = None
         self.lock.release()

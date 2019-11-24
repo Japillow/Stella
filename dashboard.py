@@ -29,7 +29,7 @@ class Dashboard(object):
         self.init_screen()
         cont = True
         while cont:
-            self.home_screen()
+            self.print_home_screen()
             cont = self.listen_for_input()
 
     def stop(self, _, __):
@@ -45,7 +45,7 @@ class Dashboard(object):
         self.screen.refresh()
         self.window = curses.newwin(100, 100, 0, 1)
 
-    def home_screen(self):
+    def print_home_screen(self):
         self.window = curses.newwin(2, 100, 0, 1)
         self.window.addstr(0, 0, "Select a website to display additional information:")
         self.window.addstr(1, 0, "(press h for help)")
@@ -151,14 +151,14 @@ class Dashboard(object):
                                                         website.ping_stats_list[600], 10)
         website.lock.release()
 
-        self.window2 = curses.newwin(50, 50, 0, 51)
-        self.window2.addstr(0, 0, "Alerts", curses.A_BOLD)
+        self.window_alerts = curses.newwin(50, 100, 0, 51)
+        self.window_alerts.addstr(0, 0, "Alerts", curses.A_BOLD)
         website.lock.acquire()
         for i, alert in enumerate(website.alert_history):
-            self.window2.addstr(i + 1, 0, f"{alert.message}")
+            self.window_alerts.addstr(i + 1, 0, f"{alert.message}")
         website.lock.release()
 
-        self.window2.refresh()
+        self.window_alerts.refresh()
 
         self.window.getch()
         self.screen.clear()
