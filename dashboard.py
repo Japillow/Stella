@@ -5,12 +5,21 @@ import sys
 
 
 def wrapped_dashboard(screen, websites, alert_history):
-    print("Starting Dashboard")
+    """Dashboard wrapper used to resume terminal state in case of a program crash.
+
+    Used for developement purposes
+    """
     dashboard = Dashboard(screen, websites, alert_history)
     dashboard.start()
 
 
 class Dashboard(object):
+    """Object responsible for initialising and updating the console output using curses.
+
+    Console update is based on :
+    - user input
+    - automatic reload every 10 seconds on Linux and Mac (using SIGALRM).
+    """
     def __init__(self, screen, websites, alert_history):
         signal(SIGINT, self.stop)
         signal(SIGTERM, self.stop)

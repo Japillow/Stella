@@ -5,7 +5,43 @@ class Stats(object):
     def __init__(self, check_interval, compute_timeframe):
         """Returns an instance of Stats.
 
-        check_interval and compute_timeframe are both in seconds.
+        Parameters
+        ----------
+        check_interval : int
+            in seconds, the frequency at which the stats are updated
+        compute_timeframe : int
+            in seconds, the duration upon which the stats are computed
+
+        Attributes
+        ----------
+        max_nb_data_points : int
+            number of data points to be recieved in the given computed timeframe
+        successes_in_timeframe : int
+            number of successful availability checks recieved in the last timeframe.
+            used to compute the availability.
+        sum_response_times : float
+            sum of the response times recieved in the last timeframe.
+        ups : deque(int)
+            Queue with the result of the availability checks (0 or 1) recieved in the last timeframe.
+            Used to determine if there is a response time and response code associated with the check.
+        response_times : deque(float)
+            Queue with the response time recieved in the last timeframe.
+            If no response time is provided during the update, no element is added.
+        response_codes : deque(int)
+            Queue with the response code recieved in the last timeframe
+            If no response code is provided during the update, no element is added.
+        availability : float
+            portion of successful availability checks.
+            Used to access the mean value of ups in constant time.
+        max_response_time : float
+            Used to access the maximum value of responses in response_times in constant time.
+        min_response_time : float
+            Used to access the minimum value of responses in response_times in constant time.
+        average_response_time :
+            Used to access the mean value of responses in response_times in constant time.
+        response_codes_dict : dict(int:int)
+            Map of the amount of each response code recieved in the last timeframe.
+            Used to access the response codes in constant time.
         """
 
         if not (float(compute_timeframe) / check_interval).is_integer():
@@ -20,15 +56,22 @@ class Stats(object):
         self.ups = deque()
         self.response_times = deque()
         self.response_codes = deque()
-        self.response_codes_dict = {}  # To access response codes in constant time
 
         self.availability = 0
         self.max_response_time = 0.
         self.min_response_time = float('inf')
         self.average_response_time = float('inf')
+        self.response_codes_dict = {}
 
     def update(self, is_up, response_time=None, response_code=None, always_a_response_code=False):
+        """Updates the stats object with data from a new check.
+        
+        Adds the success status, response time and response time to memory,
+        removes old values (those older than the compute timeframe), and
+        updates the stats in constant time most of the time (apart when 
+        max or min is removed. [...])
 
+        """
         # start = time.time()
 
         if len(self.ups) == self.max_nb_data_points:
