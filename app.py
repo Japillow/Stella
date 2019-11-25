@@ -49,7 +49,7 @@ class App(object):
             # Daemon threads will stop when program exits
 
         # Start Dashboard
-        # Dashboard is started in the main thread as POSIX signals cannot be handled in children threads
+        # Dashboard is started in the main thread since POSIX signals cannot be handled in children threads
         curses.wrapper(self.wrapped_dashboard)
 
         # When dashboard is exited, program will end and exit.

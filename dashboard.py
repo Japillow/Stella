@@ -7,13 +7,25 @@ import sys
 class Dashboard(object):
     """Object responsible for initialising and updating the console output using curses.
 
+    Note
+    ----
     Console update is based on :
     - user input
     - automatic reload every 10 seconds on Linux and Mac (using SIGALRM).
     """
     def __init__(self, screen, websites, alert_history):
-        signal(SIGINT, self.stop)
-        signal(SIGTERM, self.stop)
+        """Initialises a curses console.
+
+        Parameters
+        ----------
+        screen : _CursesWindow
+            main console screen, on which to build windows, and from which to retrieve user input
+        websites : list
+            list of Website objects containing their stats
+        """
+
+        signal(SIGINT, self.exit_dashboard)
+        signal(SIGTERM, self.exit_dashboard)
         self.screen = screen
         curses.noecho()
         curses.cbreak()
@@ -24,19 +36,22 @@ class Dashboard(object):
         self.websites = websites
         self.selected_website = 0
         self.alert_history = alert_history
+        self.refresh_interval = 10
 
     def start(self):
-        self.init_screen()
-        self.timeout = 10
-        self.run()
+        self.screen.clear()
+        self.screen.refresh()
+        self.window = curses.newwin(100, 100, 0, 1)
+        self.go_to_home_screen()
 
-    def run(self):
-        cont = True
-        while cont:
+    def go_to_home_screen(self):
+        _continue = True
+        while _continue:
             self.print_home_screen()
-            cont = self.listen_for_input()
+            _continue = self.listen_for_input()
+        self.exit_dashboard()
 
-    def stop(self, _, __):
+    def exit_dashboard(self, _, __):
         self.screen.keypad(False)
         curses.curs_set(True)
         curses.nocbreak()
@@ -44,17 +59,16 @@ class Dashboard(object):
         curses.endwin()
         sys.exit(0)
 
-    def init_screen(self):
-        self.screen.clear()
-        self.screen.refresh()
-        self.window = curses.newwin(100, 100, 0, 1)
-
     def print_home_screen(self):
+        """Prints the main dashboard screen with the list of all websites and of all alerts."""
+
+        # Print header
         self.window = curses.newwin(2, 100, 0, 1)
         self.window.addstr(0, 0, "Select a website to display additional information:")
         self.window.addstr(1, 0, "(press h for help)")
         self.window.refresh()
 
+        # Initialise columns
         title_lines = 2
         self.window_hostname = curses.newwin(100, 30, title_lines, 1)
         self.window_availability = curses.newwin(100, 20, title_lines, 20)
@@ -65,6 +79,7 @@ class Dashboard(object):
         self.window_response_time.addstr(0, 0, " Resp.Time in ms", curses.A_BOLD)
         self.window_response_time.addstr(1, 0, " (min/avg/max)", curses.A_BOLD)
 
+        # Print columns
         header_lines = 2
         for i, website in enumerate(self.websites):
             if i == self.selected_website:
@@ -90,21 +105,29 @@ class Dashboard(object):
                      f"/{website.ping_stats_list[120].average_response_time:.0f}"
                      f"/{website.ping_stats_list[120].max_response_time:.0f}"))
 
+        # Print Alerts
         self.window_alerts = curses.newwin(50, 100, 0, 55)
         self.window_alerts.addstr(0, 0, "Alerts", curses.A_BOLD)
         for i, alert in enumerate(self.alert_history):
             self.window_alerts.addstr(i + 1, 0, f"{alert.message}")
-        self.window_alerts.refresh()
 
+        # Show modifications
+        self.window_alerts.refresh()
         self.window_hostname.refresh()
         self.window_availability.refresh()
         self.window_response_time.refresh()
         self.window_alerts.refresh()
 
     def listen_for_input(self):
+        """Listen for input on the main screen and take action.
+
+        Either refresh the main screen, print the requested screen or quit the dashboard.
+        """
         try:
-            signal(SIGALRM, self.run)
-            alarm(self.timeout)
+            # Listen for user input for self.refresh_interval
+            # if no signal recieved, go back to home screen (i.e. refresh)
+            signal(SIGALRM, self.go_to_home_screen)
+            alarm(self.refresh_interval)
             char_ord = self.screen.getch()
             alarm(0)
             char = chr(char_ord).upper()
@@ -134,40 +157,43 @@ class Dashboard(object):
         return True
 
     def print_help_screen(self):
-        self.window = curses.newwin(9, 50, 0, 1)
-        self.window.addstr(0, 0, "Help information:")
-        self.window.addstr(2, 0, "  H - This help screen")
-        self.window.addstr(3, 0, "  Q or ESC - Quit the program")
-        self.window.addstr(4, 0, "  Down - Move selection down")
-        self.window.addstr(5, 0, "  Up - Move selection up")
-        self.window.addstr(6, 0, "  Right or Enter - Select website to check")
-        self.window.addstr(8, 0, "Press any key to continue")
+        """Prints a help screen"""
+        window = curses.newwin(9, 50, 0, 1)
+        window.addstr(0, 0, "Help information:")
+        window.addstr(2, 0, "  H - This help screen")
+        window.addstr(3, 0, "  Q or ESC - Quit the program")
+        window.addstr(4, 0, "  Down - Move selection down")
+        window.addstr(5, 0, "  Up - Move selection up")
+        window.addstr(6, 0, "  Right or Enter - Select website to check")
+        window.addstr(8, 0, "Press any key to continue")
 
-        # Wait for any key press
-        self.window.getch()
+        # Wait for any key press to exit page
+        window.getch()
         self.screen.clear()
         self.screen.refresh()
 
     def print_website_page(self, website):
-        self.window = curses.newwin(50, 50, 0, 1)
+        """Prints a screen detailing all the website information"""
+        window = curses.newwin(50, 50, 0, 1)
         website.lock.acquire()
-        self.window.addstr(0, 0, f"Website : {website.hostname}", curses.A_BOLD)
-        print_index = self.print_detailed_website_stats(self.window, 1,
+        window.addstr(0, 0, f"Website : {website.hostname}", curses.A_BOLD)
+        print_index = self.print_detailed_website_stats(window, 1,
                                                         website.ping_stats_list[3600], 60)
-        print_index = self.print_detailed_website_stats(self.window, print_index + 1,
+        print_index = self.print_detailed_website_stats(window, print_index + 1,
                                                         website.ping_stats_list[600], 10)
         website.lock.release()
 
-        self.window_alerts = curses.newwin(50, 100, 0, 51)
-        self.window_alerts.addstr(0, 0, "Alerts", curses.A_BOLD)
+        window_alerts = curses.newwin(50, 100, 0, 51)
+        window_alerts.addstr(0, 0, "Alerts", curses.A_BOLD)
         website.lock.acquire()
         for i, alert in enumerate(website.alert_history):
-            self.window_alerts.addstr(i + 1, 0, f"{alert.message}")
+            window_alerts.addstr(i + 1, 0, f"{alert.message}")
         website.lock.release()
 
-        self.window_alerts.refresh()
+        window_alerts.refresh()
 
-        self.window.getch()
+        # Wait for any key press to exit page
+        window.getch()
         self.screen.clear()
         self.screen.refresh()
 

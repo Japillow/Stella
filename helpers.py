@@ -12,7 +12,7 @@ def read_websites(file_path):
 
 
 def ping(host):
-    """sends ICMP ECHO_REQUEST packets to network hosts and returns relevant information.
+    """sends an ICMP ECHO_REQUEST packet to the given host and returns relevant information.
 
     Returns
     -------
