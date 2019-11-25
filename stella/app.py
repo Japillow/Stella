@@ -2,8 +2,8 @@ import curses
 from threading import Thread, Lock
 import time
 
-from dashboard import Dashboard
-from website import Website
+from stella.dashboard import Dashboard
+from stella.website import Website
 
 
 class App(object):

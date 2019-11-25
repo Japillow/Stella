@@ -1,6 +1,6 @@
-from app import App
-import config
-from helpers import read_websites
+from stella.app import App
+from stella import config
+from stella.helpers import read_websites
 
 
 def main():

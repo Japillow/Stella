@@ -1,10 +1,10 @@
 from threading import Lock
 from urllib.parse import urlparse
 
-from alert import AvailabilityAlert, AvailabilityRecovered
-import config
-from helpers import http_ping, ping
-from stats import HttpStats, PingStats
+from stella import config
+from stella.alert import AvailabilityAlert, AvailabilityRecovered
+from stella.helpers import http_ping, ping
+from stella.stats import HttpStats, PingStats
 
 
 class Website(object):

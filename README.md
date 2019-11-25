@@ -27,6 +27,16 @@ If you do not want to install the program, you can also call it by using `python
 Modify the websites you would like to monitor in the `websites.conf` file.
 Each line represents a website and check interval, separated by a space.
 
+## Architecture
+
+The architecture is divided into 3 main components:
+
+- The App, which acts as the controller
+- The Dashboard, which presents information to the user
+- The Website, which contains several Stats objects
+
+the App runs a monitoring thread per website, which updates website stats, and eventually creates an Alert.
+
 ## Improvements
 
 ### Features

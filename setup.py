@@ -14,13 +14,13 @@ setup(
     version="1.0",
     install_requires=requirements,
     tests_require=["pytest"],
-    packages=[],
+    packages=['stella'],
     author="James Barrios",
     long_description=open('README.md').read(),
     long_description_content_type="text/markdown",
     author_email="james@barrios.me",
     description="Console program which monitors availability and performance of websites",
-    py_modules=['main', 'app', 'alert', 'config', 'dashboard', 'helpers', 'stats', 'website'],
+    py_modules=['main', 'app', 'config'],
     entry_points={
         'console_scripts': [
             'stella = main:main',
