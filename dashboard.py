@@ -4,15 +4,6 @@ from signal import alarm, signal, SIGALRM, SIGINT, SIGTERM
 import sys
 
 
-def wrapped_dashboard(screen, websites, alert_history):
-    """Dashboard wrapper used to resume terminal state in case of a program crash.
-
-    Used for developement purposes
-    """
-    dashboard = Dashboard(screen, websites, alert_history)
-    dashboard.start()
-
-
 class Dashboard(object):
     """Object responsible for initialising and updating the console output using curses.
 
