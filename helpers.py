@@ -12,6 +12,15 @@ def read_websites(file_path):
 
 
 def ping(host):
+    """sends ICMP ECHO_REQUEST packets to network hosts and returns relevant information.
+
+    Returns
+    -------
+    int : success status
+    float : round-trip time (in ms)
+    int : ICMP response code
+    """
+
     param = '-n' if platform.system() == "Windows" else '-c'
     command = ['ping', param, '1', host]
     result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -27,6 +36,14 @@ def ping(host):
 
 
 def http_ping(url):
+    """Probes the given url and returns relevant information.
+
+    Returns
+    -------
+    int : success status
+    float : response time (in ms)
+    int : HTTP response code
+    """
     try:
         start = time.time()
         response = urlopen(url)
