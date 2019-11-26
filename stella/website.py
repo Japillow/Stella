@@ -6,9 +6,11 @@ import time
 from urllib.parse import urlparse
 from urllib.request import urlopen
 
+from stella.alert import AvailabilityAlert
+from stella.alert import AvailabilityRecovered
 from stella import config
-from stella.alert import AvailabilityAlert, AvailabilityRecovered
-from stella.stats import HttpStats, PingStats
+from stella.stats import HttpStats
+from stella.stats import PingStats
 
 
 class Website(object):
@@ -75,16 +77,34 @@ class Website(object):
             self.http_stats_list[timeframe].update(is_up, response_time, response_code)
         self.lock.release()
 
-    def check_for_alert(self):
+    def check_ping_stats_for_alert(self):
         """Checks if an alert should be raised.
 
         Check is based on a defined threshold and timeframe
         for the icmp ping availability stat metric.
         """
         self.lock.acquire()
-        availability = self.ping_stats_list[self.alerting_timeframe].availability
+        alert = self.check_for_alert(self.ping_stats_list)
+        self.lock.release()
+        return alert
+
+    def check_http_stats_for_alert(self):
+        """Checks if an alert should be raised.
+
+        Check is based on a defined threshold and timeframe
+        for the http ping availability stat metric.
+        """
+        self.lock.acquire()
+        alert = self.check_for_alert(self.ping_stats_list)
+        self.lock.release()
+        return alert
+
+    def check_for_alert(self, stats_list):
+        """Checks if an alert should be raised based on a Stat list."""
+
+        availability = stats_list[self.alerting_timeframe].availability
         # Ensure enough datapoints are available
-        if self.ping_stats_list[self.alerting_timeframe].timeframe_reached():
+        if stats_list[self.alerting_timeframe].timeframe_reached():
 
             # Firing Alert
             if self.availability_issue and availability >= self.alert_threshold:
@@ -102,7 +122,6 @@ class Website(object):
                 alert = None
         else:
             alert = None
-        self.lock.release()
         return alert
 
     def ping(host):

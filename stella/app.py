@@ -1,7 +1,9 @@
 import curses
-from threading import Thread, Lock
+from threading import Lock
+from threading import Thread
 import time
 
+from stella import config
 from stella.dashboard import Dashboard
 from stella.website import Website
 
@@ -77,10 +79,13 @@ class App(object):
         while True:
             start = time.time()
 
-            website.ping_and_update_ping_stats()
-            website.http_ping_and_update_http_stats()
+            if config.MONITOR_HTTP_RATHER_THAN_ICMP:
+                website.http_ping_and_update_http_stats()
+                alert = website.check_http_stats_for_alert()
+            else:
+                website.ping_and_update_ping_stats()
+                alert = website.check_ping_stats_for_alert()
 
-            alert = website.check_for_alert()
             if alert is not None:
                 alert_history_lock.acquire()
                 alert_history += [alert]

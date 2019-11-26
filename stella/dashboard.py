@@ -5,6 +5,7 @@ import sys
 
 from stella import config
 
+
 class Dashboard(object):
     """Object responsible for initialising and updating the console output using curses.
 
@@ -40,7 +41,6 @@ class Dashboard(object):
         self.refresh_interval = 10
         self.main_screen_timeframe = config.ALERTING_TIMEFRAME
 
-
     def start(self):
         self.screen.clear()
         self.screen.refresh()
@@ -73,17 +73,19 @@ class Dashboard(object):
         """Prints the main dashboard screen with the list of all websites and of all alerts."""
 
         # Print header
-        self.window = Dashboard.newwin(0, 52, 0, 0,
-                                       "Select a website to display additional information:", False)
-        self.window.addstr(1, 1, "(press h for help)")
+        monitoring_type = "HTTP" if config.MONITOR_HTTP_RATHER_THAN_ICMP else "Ping"
+        self.window = Dashboard.newwin(
+            0, 56, 0, 0, f"Welcome to Stella : {monitoring_type} Monitoring (press h for help)",
+            False)
+        self.window.addstr(1, 1, "Select a website to display additional information:")
         self.window.refresh()
 
-        ws_nb = len(self.websites)
+        ws_nb = max(len(self.websites) + 4, len(config.STATS_TIMEFRAMES) * 5)
         # Initialise columns
-        self.window_hostname = Dashboard.newwin(ws_nb + 4, 25, 2, 0, "Hostname")
-        self.window_availability = Dashboard.newwin(ws_nb + 4, 15, 2, 24, "Availability")
-        self.window_response_time = Dashboard.newwin(ws_nb + 4, 18, 2, 24 + 13, "Resp.Time in ms")
-        self.window_alerts = Dashboard.newwin(10, 90, ws_nb + 6, 0,
+        self.window_hostname = Dashboard.newwin(ws_nb, 30, 2, 0, "Hostname")
+        self.window_availability = Dashboard.newwin(ws_nb, 15, 2, 29, "Availability")
+        self.window_response_time = Dashboard.newwin(ws_nb, 18, 2, 29 + 13, "Resp.Time in ms")
+        self.window_alerts = Dashboard.newwin(ws_nb + 2, 95, ws_nb + 2, 0,
                                               f"Alerts ({config.ALERTING_TIMEFRAME}s timeframe)")
 
         self.window_response_time.addstr(1, 1, " (min/avg/max)", curses.A_BOLD)
@@ -92,39 +94,55 @@ class Dashboard(object):
         header_lines = 2
         for i, website in enumerate(self.websites):
             website.lock.acquire()
+            stats_list = website.http_stats_list if config.MONITOR_HTTP_RATHER_THAN_ICMP else website.ping_stats_list
+
             if i == self.selected_website:
                 self.window_hostname.addstr(i + header_lines, 1, f"> {website.hostname}",
                                             curses.color_pair(1) | curses.A_BOLD)
                 self.window_availability.addstr(
-                    i + header_lines, 3, f"{website.ping_stats_list[120].availability:.2f}",
+                    i + header_lines, 3,
+                    f"{stats_list[config.ALERTING_TIMEFRAME].availability:.2f}",
                     curses.color_pair(1) | curses.A_BOLD)
                 self.window_response_time.addstr(
                     i + header_lines, 3,
-                    (f"{website.ping_stats_list[120].min_response_time:.0f}"
-                     f"/{website.ping_stats_list[120].average_response_time:.0f}"
-                     f"/{website.ping_stats_list[120].max_response_time:.0f}"),
+                    (f"{stats_list[config.ALERTING_TIMEFRAME].min_response_time:.0f}"
+                     f"/{stats_list[config.ALERTING_TIMEFRAME].average_response_time:.0f}"
+                     f"/{stats_list[config.ALERTING_TIMEFRAME].max_response_time:.0f}"),
                     curses.color_pair(1) | curses.A_BOLD)
 
             else:
                 self.window_hostname.addstr(i + header_lines, 1, f"  {website.hostname}")
                 self.window_availability.addstr(
-                    i + header_lines, 3, f"{website.ping_stats_list[120].availability:.2f}")
+                    i + header_lines, 3,
+                    f"{stats_list[config.ALERTING_TIMEFRAME].availability:.2f}")
                 self.window_response_time.addstr(
                     i + header_lines, 3,
-                    (f"{website.ping_stats_list[120].min_response_time:.0f}"
-                     f"/{website.ping_stats_list[120].average_response_time:.0f}"
-                     f"/{website.ping_stats_list[120].max_response_time:.0f}"))
+                    (f"{stats_list[config.ALERTING_TIMEFRAME].min_response_time:.0f}"
+                     f"/{stats_list[config.ALERTING_TIMEFRAME].average_response_time:.0f}"
+                     f"/{stats_list[config.ALERTING_TIMEFRAME].max_response_time:.0f}"))
             website.lock.release()
 
         # Print Alerts
-        for i, alert in enumerate(self.alert_history):
-            self.window_alerts.addstr(i + 1, 1, f"{alert.message}")
+        self.print_alerts(self.window_alerts, self.alert_history, ws_nb + 2)
+
+        # Detailed information
+        self.window_detailed = Dashboard.newwin(ws_nb + 2, 35, 0, 60)
+        website = self.websites[self.selected_website]
+        website.lock.acquire()
+        self.window_detailed.addstr(0, 1, f"Website : {website.hostname}", curses.A_BOLD)
+        print_index = 0
+        for timeframe in config.STATS_TIMEFRAMES:
+            stats_list = website.http_stats_list if config.MONITOR_HTTP_RATHER_THAN_ICMP else website.ping_stats_list
+            print_index = self.print_detailed_website_stats(
+                self.window_detailed, print_index + 1, stats_list[timeframe],
+                timeframe / 60, False)
+        website.lock.release()
 
         # Show modifications
         self.window_hostname.noutrefresh()
         self.window_availability.noutrefresh()
         self.window_response_time.noutrefresh()
-        self.window_alerts.noutrefresh()
+        self.window_detailed.noutrefresh()
         curses.doupdate()
 
     def listen_for_input(self):
@@ -182,38 +200,46 @@ class Dashboard(object):
 
     def print_website_page(self, website):
         """Prints a screen detailing all the website information"""
-        window = Dashboard.newwin(50, 54, 0, 1)
+        window = Dashboard.newwin(50, 35, 0, 1)
         website.lock.acquire()
         window.addstr(0, 1, f"Website : {website.hostname}", curses.A_BOLD)
         print_index = 0
         for timeframe in config.STATS_TIMEFRAMES:
+            stats_list = website.http_stats_list if config.MONITOR_HTTP_RATHER_THAN_ICMP else website.ping_stats_list
             print_index = self.print_detailed_website_stats(window, print_index + 1,
-                                                            website.ping_stats_list[timeframe],
-                                                            timeframe // 60)
+                                                            stats_list[timeframe], timeframe // 60)
         website.lock.release()
 
-        window_alerts = Dashboard.newwin(50, 90, 0, 54,
+        window_alerts = Dashboard.newwin(50, 95, 0, 35,
                                          f"Alerts ({config.ALERTING_TIMEFRAME}s timeframe)")
         website.lock.acquire()
-        for i, alert in enumerate(website.alert_history):
-            window_alerts.addstr(2 * i + 1, 1, f"{alert.message}")
+        self.print_alerts(window_alerts, website.alert_history, 50)
         website.lock.release()
-
-        window_alerts.refresh()
 
         # Wait for any key press to exit page
         window.getch()
         self.screen.clear()
         self.screen.refresh()
 
-    def print_detailed_website_stats(self, window, print_index, stats, timeframe_in_minutes):
+    def print_detailed_website_stats(self, window, print_index, stats, timeframe_in_minutes, print_response_codes=True):
         window.addstr(print_index, 2, f"{timeframe_in_minutes} minutes stats", curses.A_BOLD)
-        window.addstr(print_index + 1, 2, "Availability: {:.0f}%".format(stats.availability / 100))
-        window.addstr(print_index + 2, 2, f"Resp.Time (min/avg/max) in ms: {stats.min_response_time:.0f}/{stats.average_response_time:.0f}/{stats.max_response_time:.0f}")
-        window.addstr(print_index + 3, 2, "Response Code count:")
+        window.addstr(print_index + 1, 2, "Availability: {:.0f}%".format(stats.availability * 100))
+        window.addstr(print_index + 2, 2, "Resp.Time in ms:")
+        window.addstr(
+            print_index + 3, 2,
+            f"min/avg/max: {stats.min_response_time:.0f}/{stats.average_response_time:.0f}/{stats.max_response_time:.0f}"
+        )
         print_index += 4
-        for key in stats.response_codes_dict:
-            window.addstr(print_index, 3, f"{key}: {stats.response_codes_dict[key]}")
+        if print_response_codes:
+            window.addstr(print_index, 2, "Response Code count:")
             print_index += 1
+            for key in stats.response_codes_dict:
+                window.addstr(print_index, 3, f"{key}: {stats.response_codes_dict[key]}")
+                print_index += 1
 
         return print_index
+
+    def print_alerts(self, window, alert_history, window_height):
+        for i, alert in enumerate(alert_history[:window_height - 2]):
+            window.addstr(i + 1, 1, f"{alert.message}")
+        window.refresh()
