@@ -1,9 +1,13 @@
+import platform
+import re
+import subprocess
 from threading import Lock
+import time
 from urllib.parse import urlparse
+from urllib.request import urlopen
 
 from stella import config
 from stella.alert import AvailabilityAlert, AvailabilityRecovered
-from stella.helpers import http_ping, ping
 from stella.stats import HttpStats, PingStats
 
 
@@ -45,8 +49,8 @@ class Website(object):
 
     def ping_and_update_ping_stats(self):
         """Updates the website ping stats with a new ping request."""
-        is_up, response_time, response_code = ping(self.hostname)
-        
+        is_up, response_time, response_code = Website.ping(self.hostname)
+
         self.lock.acquire()
         for timeframe in self.ping_stats_list:
             self.ping_stats_list[timeframe].update(is_up, response_time, response_code)
@@ -54,7 +58,7 @@ class Website(object):
 
     def http_ping_and_update_http_stats(self):
         """Updates the website http stats with a new http request."""
-        is_up, response_time, response_code = http_ping(self.url)
+        is_up, response_time, response_code = Website.http_ping(self.url)
 
         self.lock.acquire()
         for timeframe in self.http_stats_list:
@@ -70,7 +74,7 @@ class Website(object):
         self.lock.acquire()
         availability = self.ping_stats_list[timeframe].availability
         if self.ping_stats_list[timeframe].timeframe_reached():
-            if self.availability_issue and availability > threshold:
+            if self.availability_issue and availability >= threshold:
                 self.availability_issue = False
                 alert = AvailabilityRecovered(self.hostname, availability)
                 self.alert_history += [alert]
@@ -84,3 +88,44 @@ class Website(object):
             alert = None
         self.lock.release()
         return alert
+
+    def ping(host):
+        """sends an ICMP ECHO_REQUEST packet to the given host and returns relevant information.
+
+        Returns
+        -------
+        int : success status
+        float : round-trip time (in ms)
+        int : ICMP response code
+        """
+
+        param = '-n' if platform.system() == "Windows" else '-c'
+        command = ['ping', param, '1', host]
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        response_time = None
+        if result.returncode == 0:
+            re_search = re.findall("time=[0-9]*.[0-9]* *ms", str(result.stdout))
+            if len(re_search) != 1:
+                raise RuntimeError("Could not extract time from ping command")
+            str_time = re_search[0].strip("time=").strip("ms").strip(" ")
+            response_time = float(str_time)
+        return (result.returncode == 0, response_time, result.returncode)
+
+    def http_ping(url):
+        """Probes the given url and returns relevant information.
+
+        Returns
+        -------
+        int : success status
+        float : response time (in ms)
+        int : HTTP response code
+        """
+        try:
+            start = time.time()
+            response = urlopen(url)
+            response_time = time.time() - start
+            return True, response_time * 1000, response.getcode()
+
+        except Exception:
+            return False, None, None

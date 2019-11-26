@@ -13,14 +13,24 @@ Stella is a console program which monitors availability and performance of websi
 
 This program uses the included _curses_ library. As the regular Windows Python distribution does not include the _curses_ library  used for the console dashboard, the _windows-curses_ library is required.
 
-### Installation and running
+### Installation
 
 To install from source in a virtualenv:
 
 - python setup.py install
-- Run `stella`
+- `stella` to run
 
-If you do not want to install the program, you can also call it by using `python main.py`
+### Testing
+
+- Run `pytest`
+
+### NoInstall
+
+If you do not want to install the program, you can also :
+
+- install requirements (described in the setup.py file)
+- call stella with `python main.py`
+- run tests with `python -m pytest`
 
 ## Configuration
 
