@@ -38,7 +38,7 @@ class Dashboard(object):
         self.websites = websites
         self.selected_website = 0
         self.alert_history = alert_history
-        self.refresh_interval = 10
+        self.refresh_interval = config.CONSOLE_REFRESH_INTERVAL
         self.main_screen_timeframe = config.ALERTING_TIMEFRAME
 
     def start(self):
