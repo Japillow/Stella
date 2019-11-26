@@ -60,7 +60,7 @@ class Stats(object):
         self.response_codes = deque()
 
         self.availability = 0
-        self.max_response_time = 0.
+        self.max_response_time = -float('inf')
         self.min_response_time = float('inf')
         self.average_response_time = float('inf')
         self.response_codes_dict = {}
@@ -91,9 +91,15 @@ class Stats(object):
             self.sum_response_times -= old_response_time
             # Update response time stats
             if old_response_time == self.max_response_time:
-                self.max_response_time = max(self.response_times)
+                if len(self.response_times) == 0:
+                    self.max_response_time = -float('inf')
+                else:
+                    self.max_response_time = max(self.response_times)
             if old_response_time == self.min_response_time:
-                self.min_response_time = min(self.response_times)
+                if len(self.response_times) == 0:
+                    self.min_response_time = float('inf')
+                else:
+                    self.min_response_time = min(self.response_times)
 
         if was_up_timeframe_ago or (always_a_response_code and len(self.response_codes) == self.max_nb_data_points):
             # Remove old response code
