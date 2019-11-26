@@ -3,6 +3,7 @@ import curses.ascii
 from signal import alarm, signal, SIGALRM, SIGINT, SIGTERM
 import sys
 
+from stella import config
 
 class Dashboard(object):
     """Object responsible for initialising and updating the console output using curses.
@@ -37,6 +38,8 @@ class Dashboard(object):
         self.selected_website = 0
         self.alert_history = alert_history
         self.refresh_interval = 10
+        self.main_screen_timeframe = config.ALERTING_TIMEFRAME
+
 
     def start(self):
         self.screen.clear()
@@ -80,7 +83,8 @@ class Dashboard(object):
         self.window_hostname = Dashboard.newwin(ws_nb + 4, 25, 2, 0, "Hostname")
         self.window_availability = Dashboard.newwin(ws_nb + 4, 15, 2, 24, "Availability")
         self.window_response_time = Dashboard.newwin(ws_nb + 4, 18, 2, 24 + 13, "Resp.Time in ms")
-        self.window_alerts = Dashboard.newwin(10, 55, ws_nb + 6, 0, "Alerts")
+        self.window_alerts = Dashboard.newwin(10, 90, ws_nb + 6, 0,
+                                              f"Alerts ({config.ALERTING_TIMEFRAME}s timeframe)")
 
         self.window_response_time.addstr(1, 1, " (min/avg/max)", curses.A_BOLD)
 
@@ -178,19 +182,21 @@ class Dashboard(object):
 
     def print_website_page(self, website):
         """Prints a screen detailing all the website information"""
-        window = Dashboard.newwin(50, 50, 0, 1)
+        window = Dashboard.newwin(50, 54, 0, 1)
         website.lock.acquire()
         window.addstr(0, 1, f"Website : {website.hostname}", curses.A_BOLD)
-        print_index = self.print_detailed_website_stats(window, 1,
-                                                        website.ping_stats_list[3600], 60)
-        print_index = self.print_detailed_website_stats(window, print_index + 1,
-                                                        website.ping_stats_list[600], 10)
+        print_index = 0
+        for timeframe in config.STATS_TIMEFRAMES:
+            print_index = self.print_detailed_website_stats(window, print_index + 1,
+                                                            website.ping_stats_list[timeframe],
+                                                            timeframe // 60)
         website.lock.release()
 
-        window_alerts = Dashboard.newwin(50, 50, 0, 51, "Alerts")
+        window_alerts = Dashboard.newwin(50, 90, 0, 54,
+                                         f"Alerts ({config.ALERTING_TIMEFRAME}s timeframe)")
         website.lock.acquire()
         for i, alert in enumerate(website.alert_history):
-            window_alerts.addstr(2*i + 1, 1, f"{alert.message}")
+            window_alerts.addstr(2 * i + 1, 1, f"{alert.message}")
         website.lock.release()
 
         window_alerts.refresh()

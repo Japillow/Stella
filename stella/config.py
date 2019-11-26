@@ -5,9 +5,8 @@ hour = 60 * minute
 WEBSITES_FILE = "websites.conf"
 
 # Stats
-STATS_TIMEFRAMES = [2 * minute, 10 * minute, 1 * hour]
-DISPLAY_INTERVALS = [(10 * second, 10 * minute),
-                     (1 * minute, 1 * hour)]
+STATS_TIMEFRAMES = [10 * minute, 1 * hour]
 
 # Alerting
 DEFAULT_ALERT_THRESHOLD = 0.8
+ALERTING_TIMEFRAME = 2 * minute

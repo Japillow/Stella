@@ -15,9 +15,9 @@ class Website(object):
     def __init__(self,
                  website_url,
                  check_interval,
-                 timeframes=config.STATS_TIMEFRAMES,
+                 timeframes=[config.ALERTING_TIMEFRAME] + config.STATS_TIMEFRAMES,
                  alert_threshold=config.DEFAULT_ALERT_THRESHOLD,
-                 alerting_timeframe=config.STATS_TIMEFRAMES[0]):
+                 alerting_timeframe=config.ALERTING_TIMEFRAME):
         """Returns a website object containing it's stats for the configured timeframes.
 
         Parameters
