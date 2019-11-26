@@ -12,7 +12,12 @@ from stella.stats import HttpStats, PingStats
 
 
 class Website(object):
-    def __init__(self, website_url, check_interval, timeframes=config.STATS_TIMEFRAMES):
+    def __init__(self,
+                 website_url,
+                 check_interval,
+                 timeframes=config.STATS_TIMEFRAMES,
+                 alert_threshold=config.DEFAULT_ALERT_THRESHOLD,
+                 alerting_timeframe=config.STATS_TIMEFRAMES[0]):
         """Returns a website object containing it's stats for the configured timeframes.
 
         Parameters
@@ -24,7 +29,10 @@ class Website(object):
             how often the website must be checked
         timeframes : list(int)
             list of durations for which to compute stats from.
-
+        alert_threshold : float
+            availability threshold for triggerign alerts
+        alerting_timeframe : int
+            timeframe on which to evaluate website availability
         Attributes
         ----------
         availability_issue : bool
@@ -40,6 +48,8 @@ class Website(object):
         parsed_url = urlparse(website_url)
         self.hostname = parsed_url.netloc
         self.check_interval = check_interval
+        self.alert_threshold = alert_threshold
+        self.alerting_timeframe = alerting_timeframe
 
         self.availability_issue = False
         self.alert_history = []
@@ -65,23 +75,29 @@ class Website(object):
             self.http_stats_list[timeframe].update(is_up, response_time, response_code)
         self.lock.release()
 
-    def check_for_alert(self, threshold=0.8, timeframe=120):
+    def check_for_alert(self):
         """Checks if an alert should be raised.
 
         Check is based on a defined threshold and timeframe
         for the icmp ping availability stat metric.
         """
         self.lock.acquire()
-        availability = self.ping_stats_list[timeframe].availability
-        if self.ping_stats_list[timeframe].timeframe_reached():
-            if self.availability_issue and availability >= threshold:
+        availability = self.ping_stats_list[self.alerting_timeframe].availability
+        # Ensure enough datapoints are available
+        if self.ping_stats_list[self.alerting_timeframe].timeframe_reached():
+
+            # Firing Alert
+            if self.availability_issue and availability >= self.alert_threshold:
                 self.availability_issue = False
                 alert = AvailabilityRecovered(self.hostname, availability)
                 self.alert_history += [alert]
-            elif availability < threshold and not self.availability_issue:
+
+            # Recovering
+            elif availability < self.alert_threshold and not self.availability_issue:
                 self.availability_issue = True
                 alert = AvailabilityAlert(self.hostname, availability)
                 self.alert_history += [alert]
+
             else:
                 alert = None
         else:
