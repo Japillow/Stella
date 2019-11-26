@@ -123,9 +123,6 @@ class Stats(object):
         if self.successes_in_timeframe > 0:
             self.average_response_time = self.sum_response_times / self.successes_in_timeframe
 
-        assert len(self.ups) <= self.max_nb_data_points
-        assert len(self.response_times) == self.successes_in_timeframe
-
     def nb_data_points(self):
         """Returns the number of data points recieved yet.
 
@@ -147,7 +144,6 @@ class HttpStats(Stats):
         if is_up and (response_time is None or response_time is None):
             raise ValueError("Site is available but no additional information given")
         super().update(is_up, response_time, response_code)
-        assert len(self.response_codes) == self.successes_in_timeframe
 
 
 class PingStats(Stats):
@@ -162,4 +158,3 @@ class PingStats(Stats):
         if is_up and response_time is None:
             raise ValueError("Successful ping should return a response time")
         super().update(is_up, response_time, response_code, always_a_response_code=True)
-        assert len(self.response_codes) == len(self.ups), (len(self.response_codes), len(self.ups))

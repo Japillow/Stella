@@ -13,7 +13,7 @@ setup(
     name="stella",
     version="1.0",
     install_requires=requirements,
-    tests_require=["pytest"],
+    tests_require=["pytest", "mock"],
     packages=['stella'],
     author="James Barrios",
     long_description=open('README.md').read(),

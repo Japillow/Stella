@@ -46,7 +46,7 @@ class Website(object):
     def ping_and_update_ping_stats(self):
         """Updates the website ping stats with a new ping request."""
         is_up, response_time, response_code = ping(self.hostname)
-
+        
         self.lock.acquire()
         for timeframe in self.ping_stats_list:
             self.ping_stats_list[timeframe].update(is_up, response_time, response_code)
@@ -65,7 +65,7 @@ class Website(object):
         """Checks if an alert should be raised.
 
         Check is based on a defined threshold and timeframe
-        for the availability stat metric.
+        for the icmp ping availability stat metric.
         """
         self.lock.acquire()
         availability = self.ping_stats_list[timeframe].availability
