@@ -1,7 +1,11 @@
 import curses
 import curses.ascii
-from signal import alarm, signal, SIGALRM, SIGINT, SIGTERM
+from signal import signal, SIGINT, SIGTERM
 import sys
+
+if sys.platform != "win32": # Uncompatible with the Windows platform
+    from signal import SIGALRM
+    from signal import alarm
 
 from stella import config
 
@@ -161,12 +165,17 @@ class Dashboard(object):
         try:
             # Listen for user input for self.refresh_interval
             # if no signal recieved, go back to home screen (i.e. refresh)
-            signal(SIGALRM, self.go_to_home_screen)
-            alarm(self.refresh_interval)
+            if sys.platform != "win32":
+                signal(SIGALRM, self.go_to_home_screen)
+                alarm(self.refresh_interval)
             char_ord = self.screen.getch()
-            alarm(0)
-            char = chr(char_ord).upper()
-
+            if sys.platform != "win32":
+                alarm(0)
+            char = None
+            try:
+                char = chr(char_ord).upper()
+            except ValueError:  # Malformed input
+                self.listen_for_input()
             self.screen.clear()
             self.screen.refresh()
 
