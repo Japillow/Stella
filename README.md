@@ -22,6 +22,7 @@ Stella can monitors websites either through HTTP or ICMP.
   - [Running without installation](#running-without-installation)
 - [Architecture](#architecture)
   - [Testing](#testing)
+- [Documentation](#documentation)
   - [Projet structure](#projet-structure)
 - [Improvements](#improvements)
   - [Features](#features)
@@ -95,12 +96,19 @@ The architecture is divided into 3 main components:
 
 The _App_ runs a monitoring thread per _Website_, which fetches new data (by pinging the server) at each website's given `check_interval`, updates several website stats, and eventually creates an _Alert_.
 
+Each new ping and update is in O(1), appart for the edge case where the maximum (or minimum) of the stats ).
+
 The Dashboard is based on the curses library, and refreshes upon user input, or every so often (see `CONSOLE_REFRESH_INTERVAL`).
+The access to all of the stats is in O(1)
 
 ### Testing
 
 Currently, there are only tests for the alerting functionality as well as some stats computation is tested.
 In order to test the alerting functionality, we simulate a server being down and being back up (using mocking functions).
+
+## Documentation
+
+Documentation is available at [Read the Docs](https://stella-monitoring.readthedocs.io)
 
 ### Projet structure
 

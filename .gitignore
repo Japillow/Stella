@@ -1,6 +1,7 @@
 # Project specific
 requirements_dev.txt
 setup.cfg
+_build
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

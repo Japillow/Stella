@@ -2,7 +2,10 @@ from collections import deque
 
 
 class Stats(object):
-    """Class used to store metrics along with related stats."""
+    """Class used to store metrics along with related stats.
+
+    We suggest to use child classes based on Stats rather than the class directly.
+    """
 
     def __init__(self, check_interval, compute_timeframe):
         """Returns an instance of Stats.
@@ -65,7 +68,7 @@ class Stats(object):
         self.average_response_time = float('inf')
         self.response_codes_dict = {}
 
-    def update(self, is_up, response_time=None, response_code=None, always_a_response_code=False):
+    def update(self, is_up, response_time, response_code, always_a_response_code):
         """Updates the stats object with data from a new check.
 
         Adds the success status, response time and response time to memory,
@@ -73,6 +76,18 @@ class Stats(object):
         updates the stats in constant time most of the time
         (apart when max or min is removed. [...])
 
+        Parameters
+        ----------
+        is_up : bool
+            whether the site is up
+        response_time : float or None
+            How long the website takes to update. If the website is down, response_time can be None.
+        response_code : float or None
+            The response code returned by the website. If the website is down, response_code can be None,
+            unless always_a_response_code is set to True (in which case the method will enforce the need for
+            a response_code, even if the website is down).
+        always_a_response_code : bool
+            see response_code
         """
 
         # Remove old availability status
@@ -146,7 +161,7 @@ class HttpStats(Stats):
 
     Ensures both response times and response codes are provided if the website is online
     """
-    def update(self, is_up, response_time=None, response_code=None):
+    def update(self, is_up, response_time=None, response_code=None, always_a_response_code=False):
         if is_up and (response_time is None or response_time is None):
             raise ValueError("Site is available but no additional information given")
         super().update(is_up, response_time, response_code)
