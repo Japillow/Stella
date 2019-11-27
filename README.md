@@ -71,6 +71,7 @@ __Note: You may have to run `python setup.py install` again for the changes in t
 
 ### Run Tests
 
+- `pip install -r requirements.txt`
 - Run `pytest`
 
 ### Running without installation
@@ -78,7 +79,9 @@ __Note: You may have to run `python setup.py install` again for the changes in t
 If you do not want to install the program:
 
 - run stella with `python main.py` (no dependencies)
-- run tests with `python -m pytest` (requires `mock` and `pytest`)
+- run tests with :
+  - `pip install -r requirements.txt` then
+  - `python -m pytest`
 
 ## Architecture
 
