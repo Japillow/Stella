@@ -1,6 +1,7 @@
 [![Build Status](https://travis-ci.org/Japillow/Stella.svg?branch=master)](https://travis-ci.org/Japillow/Stella)
+[![Documentation Status](https://readthedocs.org/projects/stella-monitoring/badge/?version=latest)](https://stella-monitoring.readthedocs.io/en/latest/?badge=latest)
 
-## About
+## Stella
 
 Stella is a console program which monitors availability and performance of websites.
 
@@ -8,9 +9,14 @@ Stella can monitors websites either through HTTP or ICMP.
 
 ![Main Window Image](images/main_after_10_min.png)
 
+### Documentation
+
+[Read the Docs](https://stella-monitoring.readthedocs.io/en/latest/)
+
 ## Table of contents
 
-- [About](#about)
+- [Stella](#stella)
+  - [Documentation](#documentation)
 - [Table of contents](#table-of-contents)
 - [Setup](#setup)
   - [Requirements](#requirements)
@@ -22,7 +28,6 @@ Stella can monitors websites either through HTTP or ICMP.
   - [Running without installation](#running-without-installation)
 - [Architecture](#architecture)
   - [Testing](#testing)
-- [Documentation](#documentation)
   - [Projet structure](#projet-structure)
 - [Improvements](#improvements)
   - [Features](#features)
@@ -105,10 +110,6 @@ The access to all of the stats is in O(1)
 
 Currently, there are only tests for the alerting functionality as well as some stats computation is tested.
 In order to test the alerting functionality, we simulate a server being down and being back up (using mocking functions).
-
-## Documentation
-
-Documentation is available at [Read the Docs](https://stella-monitoring.readthedocs.io)
 
 ### Projet structure
 
