@@ -1,4 +1,4 @@
-# Stella
+[![Build Status](https://travis-ci.org/Japillow/Stella.svg?branch=master)](https://travis-ci.org/Japillow/Stella)
 
 ## About
 
@@ -7,26 +7,26 @@ Stella is a console program which monitors availability and performance of websi
 Stella can monitors websites either through HTTP or ICMP.
 
 ![Main Window Image](images/main_after_10_min.png)
+
 ## Table of contents
 
-- [Stella](#stella)
-  - [About](#about)
-  - [Table of contents](#table-of-contents)
-  - [Setup](#setup)
-    - [Requirements](#requirements)
-      - [Note for Windows users](#note-for-windows-users)
-    - [Installation](#installation)
-    - [Configuration](#configuration)
-    - [Running](#running)
-    - [Run Tests](#run-tests)
-    - [Running without installation](#running-without-installation)
-  - [Architecture](#architecture)
-    - [Testing](#testing)
-    - [Projet structure](#projet-structure)
-  - [Improvements](#improvements)
-    - [Features](#features)
-    - [Implementation](#implementation)
-    - [Known issues](#known-issues)
+- [About](#about)
+- [Table of contents](#table-of-contents)
+- [Setup](#setup)
+  - [Requirements](#requirements)
+    - [Note for Windows users](#note-for-windows-users)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+  - [Running](#running)
+  - [Run Tests](#run-tests)
+  - [Running without installation](#running-without-installation)
+- [Architecture](#architecture)
+  - [Testing](#testing)
+  - [Projet structure](#projet-structure)
+- [Improvements](#improvements)
+  - [Features](#features)
+  - [Implementation](#implementation)
+  - [Known issues](#known-issues)
 
 ## Setup
 
