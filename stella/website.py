@@ -95,7 +95,7 @@ class Website(object):
         for the http ping availability stat metric.
         """
         self.lock.acquire()
-        alert = self.check_for_alert(self.ping_stats_list)
+        alert = self.check_for_alert(self.http_stats_list)
         self.lock.release()
         return alert
 
