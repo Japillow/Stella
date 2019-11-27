@@ -80,10 +80,10 @@ class App(object):
             start = time.time()
 
             if config.MONITOR_HTTP_RATHER_THAN_ICMP:
-                website.http_ping_and_update_http_stats()
-                alert = website.check_http_stats_for_alert()
+                website.ping_and_update_stats(use_http=True)
+                alert = website.check_for_alert(use_http=True)()
             else:
-                website.ping_and_update_ping_stats()
+                website.ping_and_update_stats()
                 alert = website.check_ping_stats_for_alert()
 
             if alert is not None:

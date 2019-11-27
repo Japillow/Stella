@@ -161,10 +161,10 @@ class HttpStats(Stats):
 
     Ensures both response times and response codes are provided if the website is online
     """
-    def update(self, is_up, response_time=None, response_code=None, always_a_response_code=False):
+    def update(self, is_up, response_time=None, response_code=None):
         if is_up and (response_time is None or response_time is None):
             raise ValueError("Site is available but no additional information given")
-        super().update(is_up, response_time, response_code)
+        super().update(is_up, response_time, response_code, always_a_response_code=False)
 
 
 class PingStats(Stats):

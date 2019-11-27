@@ -12,7 +12,7 @@ def test_stats_length():
         if is_up:
             response_time = random.randint(0, 10000)
             response_code = random.randint(0, 70)
-        stats.update(is_up, response_time, response_code)
+        stats.update(is_up, response_time, response_code, False)
         assert len(stats.ups) <= stats.max_nb_data_points
         assert len(stats.response_times) == stats.successes_in_timeframe
 

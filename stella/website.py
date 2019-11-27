@@ -59,49 +59,32 @@ class Website(object):
         self.ping_stats_list = {timeframe: PingStats(check_interval, timeframe) for timeframe in timeframes}
         self.http_stats_list = {timeframe: HttpStats(check_interval, timeframe) for timeframe in timeframes}
 
-    def ping_and_update_ping_stats(self):
-        """Updates the website ping stats with a new ping request."""
-        is_up, response_time, response_code = Website.ping(self.hostname)
+    def ping_and_update_stats(self, use_http):
+        """Updates the website icmp (or http) ping stats with a new ping (or http) request."""
+        if use_http:
+            is_up, response_time, response_code = Website.http_ping(self.url)
+            stats_list = self.http_stats_list
+        else:
+            is_up, response_time, response_code = Website.ping(self.hostname)
+            stats_list = self.ping_stats_list
 
         self.lock.acquire()
-        for timeframe in self.ping_stats_list:
-            self.ping_stats_list[timeframe].update(is_up, response_time, response_code)
+        for timeframe in stats_list:
+            stats_list[timeframe].update(is_up, response_time, response_code)
         self.lock.release()
 
-    def http_ping_and_update_http_stats(self):
-        """Updates the website http stats with a new http request."""
-        is_up, response_time, response_code = Website.http_ping(self.url)
-
-        self.lock.acquire()
-        for timeframe in self.http_stats_list:
-            self.http_stats_list[timeframe].update(is_up, response_time, response_code)
-        self.lock.release()
-
-    def check_ping_stats_for_alert(self):
-        """Checks if an alert should be raised.
+    def check_for_alert(self, use_http):
+        """Checks if an alert should be raised based on a Stat list.
 
         Check is based on a defined threshold and timeframe
-        for the icmp ping availability stat metric.
+        for the icmp or http ping availability stat metric.
         """
+        if use_http:
+            stats_list = self.http_stats_list
+        else:
+            stats_list = self.ping_stats_list
+
         self.lock.acquire()
-        alert = self.check_for_alert(self.ping_stats_list)
-        self.lock.release()
-        return alert
-
-    def check_http_stats_for_alert(self):
-        """Checks if an alert should be raised.
-
-        Check is based on a defined threshold and timeframe
-        for the http ping availability stat metric.
-        """
-        self.lock.acquire()
-        alert = self.check_for_alert(self.http_stats_list)
-        self.lock.release()
-        return alert
-
-    def check_for_alert(self, stats_list):
-        """Checks if an alert should be raised based on a Stat list."""
-
         availability = stats_list[self.alerting_timeframe].availability
         # Ensure enough datapoints are available
         if stats_list[self.alerting_timeframe].timeframe_reached():
@@ -122,6 +105,7 @@ class Website(object):
                 alert = None
         else:
             alert = None
+        self.lock.release()
         return alert
 
     def ping(host):
