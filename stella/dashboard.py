@@ -45,9 +45,9 @@ class Dashboard(object):
     def start(self):
         self.screen.clear()
         self.screen.refresh()
-        self.go_to_home_screen()
+        self.go_to_home_screen(None, None)
 
-    def go_to_home_screen(self):
+    def go_to_home_screen(self, _, __):
         """Loops through the home screen, listens for user input and periodically refreshes the interface."""
         self._continue = True
         while self._continue:
