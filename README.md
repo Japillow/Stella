@@ -134,8 +134,7 @@ In order to test the alerting functionality, we simulate a server being down and
 ### Implementation
 
 - When parsing the `websites.conf` conf files, Errors are not handled : improve parsing (check integer and url integrity) to help the user identify when there is an error in the config file.
-- The `website.ping` `subprocess.run` call (to the system ICMP ping) blocks the thread, therefore the app. This therefore currently represents the main program bottleneck. For example, if connection is poor and ICMP ping takes more than 1 second, no more than one website will be able to update its stats every seconds. This is why we currently default the monitoring to HTTP.
-- Website monitoring is done with one thread per website. Due to the python Global Interpreter Lock, they do not run concurrently, allowing potential bottlenecks (such as above) for the program.
+- Website monitoring is done with one thread per website. Due to the python Global Interpreter Lock, they do not run concurrently, allowing potential bottlenecks for the program (for ex if we have many websites (more than 100), the interface may flicker when reloading).
 - The `app.alert_history` is shared among all websites : replace the object sharing by using producer/consumer queue per website, whereby each websites produces alerts and the main thread consumes them to save in the main alert history.
 - Stats objects are built based on the assumption that stats will be updated every check_interval. If for some reason the stats are not updated (for exemple if the host machine freezes), the stats do not really represent the last time timeframe of data. Therefore, we need to add the notion of timestamp for each new data, and compute stats based on the timestamps. The data from the metrics queues will be poped, up to data whose timestamp is in the timeframe.
 

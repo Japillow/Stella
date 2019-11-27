@@ -62,10 +62,7 @@ class Dashboard(object):
         curses.nocbreak()
         curses.echo()
         curses.endwin()
-        if signal_arg1 is not None:
-            sys.exit(0)  # Force exit when launched with signals
-        else:
-            pass # Program will exit naturally
+        sys.exit(0)
 
     def newwin(height, width, start_y=0, start_x=0, title=None, borders=True):
         """Create a new dashboard window with optional borders and title"""
