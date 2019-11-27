@@ -58,7 +58,7 @@ To install from source in a virtualenv:
 - Modify the websites you would like to monitor in the `websites.conf` file.
 Each line consists of a valid HTTP URL (as described in the [RFC 3986](https://tools.ietf.org/html/rfc3986)), and an integer representing the check interval in seconds (i.e how often to ping the website). Both arguments are separated by a space. You can add any number of websites.
 
-- By default, the app will monitors website through http. To change this setting, set `MONITOR_HTTP_RATHER_THAN_ICMP` to `False` in the Stella configuration file (`stella/config.py`)
+- By default, the app will monitors website through ping. To change this setting, set `MONITOR_HTTP_RATHER_THAN_ICMP` to `True` in the Stella configuration file (`stella/config.py`). Note that some sites may have DDoS Protection when using http monitoring that will quickly block low check interval http probing (for example `github.com`).
 
 - By default, the app will compute and display stats (such as averages) based on certain timeframes. You can change them or add any number of timeframes in the `STATS_TIMEFRAMES` in the configuration file.
 

@@ -6,7 +6,7 @@ hour = 60 * minute
 # Suggested values, Used for README.md screenshots
 
 WEBSITES_FILE = "websites.conf"
-MONITOR_HTTP_RATHER_THAN_ICMP = True
+MONITOR_HTTP_RATHER_THAN_ICMP = False
 
 # Stats
 CONSOLE_REFRESH_INTERVAL = 1
