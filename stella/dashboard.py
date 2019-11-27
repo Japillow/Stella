@@ -3,9 +3,9 @@ import curses.ascii
 from signal import signal, SIGINT, SIGTERM
 import sys
 
-if sys.platform != "win32": # Uncompatible with the Windows platform
-    from signal import SIGALRM
+if sys.platform != "win32":  # Uncompatible with the Windows platform
     from signal import alarm
+    from signal import SIGALRM
 
 from stella import config
 
@@ -141,9 +141,9 @@ class Dashboard(object):
         print_index = 0
         for timeframe in config.STATS_TIMEFRAMES:
             stats_list = website.http_stats_list if config.MONITOR_HTTP_RATHER_THAN_ICMP else website.ping_stats_list
-            print_index = self.print_detailed_website_stats(
-                self.window_detailed, print_index + 1, stats_list[timeframe],
-                timeframe / 60, False)
+            print_index = self.print_detailed_website_stats(self.window_detailed, print_index + 1,
+                                                            stats_list[timeframe], timeframe / 60,
+                                                            False)
         website.lock.release()
 
         # Show modifications
@@ -192,12 +192,7 @@ class Dashboard(object):
             elif char_ord == curses.ascii.LF or char_ord == curses.KEY_RIGHT:
                 self.print_website_page(self.websites[self.selected_website])
         except Exception as exc:
-            self.screen.addstr(0, 1, 'An unexpected error occured: ')
-            self.screen.addstr(1, 5, f'{exc}')
-            self.screen.refresh()
-            self.screen.getch()
-            self.screen.clear()
-            self.screen.refresh()
+            self.print_exception(exc)
         return True
 
     def print_help_screen(self):
@@ -227,8 +222,12 @@ class Dashboard(object):
                                                             stats_list[timeframe], timeframe // 60)
         website.lock.release()
 
-        window_alerts = Dashboard.newwin(50, 95, 0, 35,
-                                         f"Alerts ({config.ALERTING_TIMEFRAME}s timeframe)")
+        try:
+            window_alerts = Dashboard.newwin(50, 95, 0, 35,
+                                             f"Alerts ({config.ALERTING_TIMEFRAME}s timeframe)")
+        except _curses.error as exc:
+            self.print_exception(str(exc) + " Please resize your terminal.")
+
         website.lock.acquire()
         self.print_alerts(window_alerts, website.alert_history, 50)
         website.lock.release()
@@ -238,7 +237,12 @@ class Dashboard(object):
         self.screen.clear()
         self.screen.refresh()
 
-    def print_detailed_website_stats(self, window, print_index, stats, timeframe_in_minutes, print_response_codes=True):
+    def print_detailed_website_stats(self,
+                                     window,
+                                     print_index,
+                                     stats,
+                                     timeframe_in_minutes,
+                                     print_response_codes=True):
         """Prints some stats attributes.
 
         Parameters
@@ -276,3 +280,11 @@ class Dashboard(object):
         for i, alert in enumerate(alert_history[:window_height - 2]):
             window.addstr(i + 1, 1, f"{alert.message}")
         window.refresh()
+
+    def print_exception(self, exc):
+        self.screen.addstr(0, 1, 'An unexpected error occured: ')
+        self.screen.addstr(1, 5, f'{exc}')
+        self.screen.refresh()
+        self.screen.getch()
+        self.screen.clear()
+        self.screen.refresh()

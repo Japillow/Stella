@@ -14,7 +14,7 @@ Stella can monitors websites either through HTTP or ICMP.
 - [Table of contents](#table-of-contents)
 - [Setup](#setup)
   - [Requirements](#requirements)
-    - [Note for Windows users](#note-for-windows-users)
+    - [Note for Windows](#note-for-windows)
   - [Installation](#installation)
   - [Configuration](#configuration)
   - [Running](#running)
@@ -35,9 +35,11 @@ Stella can monitors websites either through HTTP or ICMP.
 - Linux, MacOS or Windows.
 - Python 3.7
 
-#### Note for Windows users
+#### Note for Windows
 
-This program uses the included _curses_ library. As the regular Windows Python distribution does not include the _curses_ library  used for the console dashboard, the _windows-curses_ library is required.
+This program uses the included _curses_ library. As the regular Windows Python distribution does not include the _curses_ library  used for the console dashboard, the _windows-curses_ library is required (and is automatically installed by the installer).
+
+If Stella crashes on startup, ensure your Powershell or Command Prompt window is big enough.
 
 ### Installation
 
