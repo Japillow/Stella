@@ -64,7 +64,7 @@ Each line consists of a valid HTTP URL (as described in the [RFC 3986](https://t
 
 - The app will send alerts when the website availability during a certain timeframe (the `ALERTING_TIMEFRAME`) drops below a given threshold (the `DEFAULT_ALERT_THRESHOLD`) in the configuration file.
 
-__Note: You may have to run `python setup.py install` again for the changes in the `stella/config.py` file to be applied to your installation__. See [Running without installation](#running-without-installation) Running without installation if you wish to modify the config file often.
+__Note: You may have to run `python setup.py install` again for the changes in the `stella/config.py` file to be applied to your installation__. See [Running without installation](#running-without-installation) if you wish to modify the config file often.
 
 ### Running
 
@@ -101,10 +101,10 @@ The architecture is divided into 3 main components:
 
 The _App_ runs a monitoring thread per _Website_, which fetches new data (by pinging the server) at each website's given `check_interval`, updates several website stats, and eventually creates an _Alert_.
 
-Each new ping and update is in O(1), appart for the edge case where the maximum (or minimum) of the stats ).
+Each new ping and update is in O(1), appart for the edge case where the maximum (or minimum) of a metric needs to be recomputed, because the maximum corresponded to an old data.
 
 The Dashboard is based on the curses library, and refreshes upon user input, or every so often (see `CONSOLE_REFRESH_INTERVAL`).
-The access to all of the stats is in O(1)
+The access to all of the stats dispalyed is in O(1).
 
 ### Testing
 
