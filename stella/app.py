@@ -81,10 +81,10 @@ class App(object):
 
             if config.MONITOR_HTTP_RATHER_THAN_ICMP:
                 website.ping_and_update_stats(use_http=True)
-                alert = website.check_for_alert(use_http=True)()
+                alert = website.check_for_alert(use_http=True)
             else:
-                website.ping_and_update_stats()
-                alert = website.check_ping_stats_for_alert()
+                website.ping_and_update_stats(use_http=False)
+                alert = website.check_for_alert(use_http=False)
 
             if alert is not None:
                 alert_history_lock.acquire()
