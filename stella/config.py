@@ -21,9 +21,9 @@ ALERTING_TIMEFRAME = 5 * second
 # # Uncomment the section below to overide the suggested values
 # # Values used for the Datadog Project :
 
-# # WEBSITES_FILE = "websites.conf"
+# WEBSITES_FILE = "websites.conf"
 # CONSOLE_REFRESH_INTERVAL = 10
 # MONITOR_HTTP_RATHER_THAN_ICMP = True
-# STATS_TIMEFRAMES = [10 * minute, 1 * hour]
+# STATS_TIMEFRAMES = [2 * minute, 10 * minute, 1 * hour]
 # DEFAULT_ALERT_THRESHOLD = 0.8
 # ALERTING_TIMEFRAME = 2 * minute

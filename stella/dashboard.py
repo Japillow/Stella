@@ -23,9 +23,10 @@ class Dashboard(object):
         screen : _CursesWindow
             main console screen, on which to build windows, and from which to retrieve user input
         websites : list
-            list of Website objects containing their stats
+            list of Website objects containing their Stats and Alerts
+        alert_history : list
+            list of Alert to display them
         """
-
         signal(SIGINT, self.exit_dashboard)
         signal(SIGTERM, self.exit_dashboard)
         self.screen = screen
@@ -47,21 +48,27 @@ class Dashboard(object):
         self.go_to_home_screen()
 
     def go_to_home_screen(self):
-        _continue = True
-        while _continue:
+        """Loops through the home screen, listens for user input and periodically refreshes the interface."""
+        self._continue = True
+        while self._continue:
             self.print_home_screen()
-            _continue = self.listen_for_input()
+            self._continue = self.listen_for_input()
         self.exit_dashboard(None, None)
 
-    def exit_dashboard(self, _, __):
+    def exit_dashboard(self, signal_arg1, signal_arg2):
+        """Cleans up terminal before exiting"""
         self.screen.keypad(False)
         curses.curs_set(True)
         curses.nocbreak()
         curses.echo()
         curses.endwin()
-        sys.exit(0)
+        if signal_arg1 is not None:
+            sys.exit(0)  # Force exit when launched with signals
+        else:
+            pass # Program will exit naturally
 
     def newwin(height, width, start_y=0, start_x=0, title=None, borders=True):
+        """Create a new dashboard window with optional borders and title"""
         window = curses.newwin(height, width, start_y, start_x)
         if borders:
             window.border()
@@ -146,9 +153,13 @@ class Dashboard(object):
         curses.doupdate()
 
     def listen_for_input(self):
-        """Listen for input on the main screen and take action.
+        """Listens for user input on the main screen, and takes action accordingly.
 
-        Either refresh the main screen, print the requested screen or quit the dashboard.
+        Options include :
+        - change selected website
+        - print the selected website page
+        - Print help window
+        - Quit the dashboard.
         """
         try:
             # Listen for user input for self.refresh_interval
@@ -222,6 +233,21 @@ class Dashboard(object):
         self.screen.refresh()
 
     def print_detailed_website_stats(self, window, print_index, stats, timeframe_in_minutes, print_response_codes=True):
+        """Prints some stats attributes.
+
+        Parameters
+        ----------
+        window : _CursesWindow
+            The window in which to print the stats
+        print_index : int
+            Line in window at which to start printing
+        stats : stats.Stats
+            a Stats object
+        timeframe_in_minutes : float
+            used to display information on the stat list
+        print_response_codes : bool
+            whether to print the response codes
+        """
         window.addstr(print_index, 2, f"{timeframe_in_minutes} minutes stats", curses.A_BOLD)
         window.addstr(print_index + 1, 2, "Availability: {:.0f}%".format(stats.availability * 100))
         window.addstr(print_index + 2, 2, "Resp.Time in ms:")
@@ -240,6 +266,7 @@ class Dashboard(object):
         return print_index
 
     def print_alerts(self, window, alert_history, window_height):
+        """Limit the alert printing to the window_height to prevent curses from crashing."""
         for i, alert in enumerate(alert_history[:window_height - 2]):
             window.addstr(i + 1, 1, f"{alert.message}")
         window.refresh()
