@@ -38,8 +38,9 @@ Stella can monitors websites either through HTTP or ICMP.
 
 ### Requirements
 
-- Linux, MacOS or Windows.
+- Linux, MacOS.
 - Python 3.7
+- Support for Windows is still experimental and not guaranteed.
 
 #### Note for Windows
 
